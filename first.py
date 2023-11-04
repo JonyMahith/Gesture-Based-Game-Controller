@@ -1,47 +1,37 @@
 import cv2
-import mediapipe as mp
+import numpy as np
 
-cap = cv2.VideoCapture(0)
-mp_hands = mp.solutions.hands
-hands = mp_hands.Hands()
-finger_coordinates = [(8, 6), (12, 10), (16, 14), (20, 10)]
-thumb_coordinate = (4, 2)
-mp_drawing = mp.solutions.drawing_utils
+# Load the image
+image = cv2.imread('finger_photo.jpg')
 
-while True:
-    success, img = cap.read()
-    if not success:
-        print("End of video.")
-        break
+# Convert the image to grayscale
+gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+cv2.imshow(gray)
 
-    imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    results = hands.process(imgRGB)
-    multi_landmarks = results.multi_hand_landmarks
+# Apply Gaussian blur to reduce noise
+blurred = cv2.GaussianBlur(gray, (5, 5), 0)
 
-    if multi_landmarks:
-        hand_points = []
-        for hand_lms in multi_landmarks:
-            mp_drawing.draw_landmarks(img, hand_lms, mp_hands.HAND_CONNECTIONS)
-            for idx, lm in enumerate(hand_lms.landmark):
-                h, w, c = img.shape
-                cx, cy = int(lm.x * w), int(lm.y * h)
-                hand_points.append((cx, cy))
+# Threshold the image to create a binary mask
+_, thresholded = cv2.threshold(blurred, 120, 255, cv2.THRESH_BINARY)
 
-        for point in hand_points:
-            cv2.circle(img, point, 10, (0, 0, 255), cv2.FILLED)
+# Find contours in the binary mask
+contours, _ = cv2.findContours(thresholded, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-        up_count = 0
+# Initialize a variable to count fingers
+finger_count = 0
 
-        for coordinate in finger_coordinates:
-            if hand_points[coordinate[0]][1] < hand_points[coordinate[1]][1]:
-                up_count += 1
+# Define a region of interest (ROI) where you expect fingers
+roi = image[100:300, 100:300]
 
-        cv2.putText(img, str(up_count), (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 4, (255, 0, 0), 12)
+# Loop through the contours and check if they are within the ROI
+for contour in contours:
+    if cv2.pointPolygonTest(contour, (200, 200), False) > 0:
+        finger_count += 1
 
-    cv2.imshow('Fingercounts', img)
-
-    if cv2.waitKey(5) & 0xFF == ord('q'):
-        break
-
-cap.release()
+# Display the image with the finger count
+cv2.putText(image, f'Fingers: {finger_count}', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+cv2.imshow('Finger Count', image)
+cv2.waitKey(0)
 cv2.destroyAllWindows()
+
+print(f'Number of fingers: {finger_count}')
