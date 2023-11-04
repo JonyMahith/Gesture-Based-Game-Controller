@@ -2,14 +2,14 @@ import cv2
 import numpy as np
 
 # Load the image
-image = cv2.imread('finger_photo.jpg')
+image = cv2.imread("folder/WhatsApp Image 2023-11-04 at 9.48.23 PM.jpeg")
 
 # Convert the image to grayscale
-gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-cv2.imshow(gray)
+# gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+# cv2.imshow(gray)
 
 # Apply Gaussian blur to reduce noise
-blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+blurred = cv2.GaussianBlur(image, (5, 5), 0)
 
 # Threshold the image to create a binary mask
 _, thresholded = cv2.threshold(blurred, 120, 255, cv2.THRESH_BINARY)
