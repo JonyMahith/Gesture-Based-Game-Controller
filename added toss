@@ -1,0 +1,103 @@
+import random
+k = 5
+cha = 0
+total_cha = 100
+nrun = 0
+crun = 0
+krun = 0
+gbat = 0
+u = input("even or odd ")
+p = ["even", "odd"]
+b = ["bat", "ball"]
+ch = random.choice(b)
+c = random.choice(p)
+a = 1
+b = 6
+s = int(input("enter a number "))
+k = random.randint(a, b)
+print("system choice is ", k)
+sum = k + s
+print("sum is ", sum)
+if sum % 2 == 0:
+    print("even")
+    if u == "even":
+        print("please choose ")
+        i = input("bat or ball ")
+    else:
+        print("system chooses ", ch)
+    if ch == "ball":
+        i = "bat"
+    else:
+        i = "ball"
+else:
+    print("odd")
+    if u == "odd":
+        print("please choose ")
+        i = input("bat or ball ")
+    else:
+        print("system chooses", ch)
+if i == "bat":
+    while cha < total_cha:
+        urun = int(input("enter your run "))
+        cbowl = random.randint(1, 6)
+        print(" system ball is ", cbowl)
+        if cbowl == urun:
+            print("you are out its system chance  to bat ")
+            while cha < total_cha:
+                irun = int(input("enter your ball "))
+                cbat = random.randint(1, 6)
+                print(" system run is ", cbat)
+                if cbat == irun:
+                    print(" system is out")
+                    print(krun)
+                    if krun > nrun:
+                        print("system wins by", krun - nrun)
+                    else:
+                        print("you win", nrun-krun)
+                        break
+                else:
+                    krun = krun + cbat
+                    print(krun)
+                    if krun > nrun:
+                        print("system wins by ", krun - nrun)
+                        break
+                    cha = + 1
+            break
+        else:
+            nrun = nrun + urun
+            print(nrun)
+            continue
+            cha = + 1
+if i == "ball":
+    while cha < total_cha:
+        urun = int(input("enter your ball "))
+        cbat = random.randint(1, 6)
+        print(" system run is ", cbat)
+        if cbat == urun:
+            print("system is out")
+            while cha < total_cha:
+                irun = int(input("enter your run "))
+                zbat = random.randint(1, 6)
+                print(" system ball is ", zbat)
+                if zbat == irun:
+                    print("you are out")
+                    print(krun)
+                    if krun > crun:
+                        print("you win by", krun - crun)
+                    else:
+                        print(" system win", crun - krun)
+                        break
+                else:
+                    krun = krun + irun
+                    print(krun)
+                    if krun > crun:
+                        print(" you win by runs", krun-crun)
+                        cha = 10000
+                        break
+                    cha = + 1
+            break
+        else:
+            crun = crun + cbat
+            print(crun)
+            continue
+            cha = + 1
