@@ -1,58 +1,78 @@
 import cv2
-import numpy as np
+import mediapipe as mp
+mp_drawing = mp.solutions.drawing_utils
+mp_drawing_styles = mp.solutions.drawing_styles
+mp_hands = mp.solutions.hands
 
-# Load the image from the file
-img = cv2.imread('folder/finger scan.jpg')
+# For webcam input:
+cap = cv2.VideoCapture(0)
+with mp_hands.Hands(
+    model_complexity=0,
+    min_detection_confidence=0.5,
+    min_tracking_confidence=0.5) as hands:
+  while cap.isOpened():
+    success, image = cap.read()
+    if not success:
+      print("Ignoring empty camera frame.")
+      # If loading a video, use 'break' instead of 'continue'.
+      continue
 
-# Check if the image was loaded successfully
-if img is not None:
-    # Define the desired width and height for the resized image
-    new_width = 800  # Change this value to your desired width
-    new_height = 600  # Change this value to your desired height
+    # To improve performance, optionally mark the image as not writeable to
+    # pass by reference.
+    image.flags.writeable = False
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    results = hands.process(image)
 
-    # Resize the image to the new dimensions
-    image = cv2.resize(cake, (new_width, new_height))
+    # Draw the hand annotations on the image.
+    image.flags.writeable = True
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
 
-    # Display the resized image in a window
-    cv2.imshow('image', image)
+    # Initially set finger count to 0 for each cap
+    fingerCount = 0
 
-    # Wait for a key press indefinitely
-    cv2.waitKey(0)
+    if results.multi_hand_landmarks:
 
-    # Close all OpenCV windows
-    cv2.destroyAllWindows()
-else:
-    print("Error: Could not load the image.")
+      for hand_landmarks in results.multi_hand_landmarks:
+        # Get hand index to check label (left or right)
+        handIndex = results.multi_hand_landmarks.index(hand_landmarks)
+        handLabel = results.multi_handedness[handIndex].classification[0].label
 
-gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        # Set variable to keep landmarks positions (x and y)
+        handLandmarks = []
 
-# Apply Gaussian blur to reduce noise
-blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+        # Fill list with x and y positions of each landmark
+        for landmarks in hand_landmarks.landmark:
+          handLandmarks.append([landmarks.x, landmarks.y])
 
-# Threshold the image to create a binary mask
-_, thresholded = cv2.threshold(blurred, 120, 255, cv2.THRESH_BINARY)
+        
+        if handLabel == "Left" and handLandmarks[4][0] > handLandmarks[3][0]:
+          fingerCount = fingerCount+1
+        elif handLabel == "Right" and handLandmarks[4][0] < handLandmarks[3][0]:
+          fingerCount = fingerCount+1
 
-# Convert the thresholded image to CV_8UC1 format
-thresholded = thresholded.astype(np.uint8)
+       
+        if handLandmarks[8][1] < handLandmarks[6][1]:       #Index finger
+          fingerCount = fingerCount+1
+        if handLandmarks[12][1] < handLandmarks[10][1]:     #Middle finger
+          fingerCount = fingerCount+1
+        if handLandmarks[16][1] < handLandmarks[14][1]:     #Ring finger
+          fingerCount = fingerCount+1
+        if handLandmarks[20][1] < handLandmarks[18][1]:     #Pinky
+          fingerCount = fingerCount+1
 
-# Find contours in the binary mask
-contours, _ = cv2.findContours(thresholded, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        # Draw hand landmarks 
+        mp_drawing.draw_landmarks(
+            image,
+            hand_landmarks,
+            mp_hands.HAND_CONNECTIONS,
+            mp_drawing_styles.get_default_hand_landmarks_style(),
+            mp_drawing_styles.get_default_hand_connections_style())
 
-# Initialize a variable to count fingers
-finger_count = 0
+    # Display finger count
+    cv2.putText(image, str(fingerCount), (50, 450), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 0, 0), 10)
 
-# Define a region of interest (ROI) where you expect fingers
-roi = image[100:300, 100:300]
-
-# Loop through the contours and check if they are within the ROI
-for contour in contours:
-    if cv2.pointPolygonTest(contour, (200, 200), False) > 0:
-        finger_count += 1
-
-# Display the image with the finger count
-cv2.putText(image, f'Fingers: {finger_count}', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-cv2.imshow('Finger Count', image)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
-
-print(f'Number of fingers: {finger_count}')
+    # Display image
+    cv2.imshow('MediaPipe Hands', image)
+    if cv2.waitKey(5) & 0xFF == 27:
+      break
+cap.release()
